@@ -4,7 +4,7 @@
 # pour la gestion des droits sur l'arborescence mediawiki
 - name: "add user-ansible"
   command:
-    usermod -a -G www-data sebastien
+    usermod -a -G www-data user-ansible"
 
 #1. Création du repertoire pour l'installation des fichiers Mediawiki
 - name: "mediawiki directory"
@@ -35,7 +35,7 @@
 #   LocalSettings.php n'existe pas
 - name: "mediawiki configuration"
   become: yes
-  become_user: "sebastien"
+  become_user: "user-ansible"
   args:
     creates: "{{mediawiki_directory}}/LocalSettings.php"
     chdir: "{{mediawiki_maintenance_directory}}"
@@ -57,7 +57,7 @@
 #   une seule fois
 - name: "mediawiki db update"
   become: yes
-  become_user: "sebastien"
+  become_user: "user-ansible"
   command:
     php update.php --quick
   args:
