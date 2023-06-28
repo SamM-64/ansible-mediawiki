@@ -1,10 +1,10 @@
 # Ansible-Mediawiki
 
-# How To use Ansible
+# Comment utiliser Ansible
 
-Based on the infrastructure in the network folder.
+Basé sur l'infrastructure du dossier network.
 
-## Create virtualenv
+## Créer un environnement virtuel
 
 ```bash
 # To create
@@ -14,13 +14,13 @@ source <nom_de_mon_virtual_env>/bin/activate
 # To deactivate
 deactivate
 ```
-### Install Ansible
+### Installer Ansible
 
 ```bash
 pip install ansible
 ```
 
-### Create a playbook
+### Créer un playbook
 
 ```bash
 mkdir ansible
@@ -28,19 +28,19 @@ cd ansible
 touch install-apache.yml && touch install-mariadb.yml && touch install-mediawiki.yml
 ```
 
-### Create a inventory file
+### Créer un fichier d'inventaire
 
 ```bash
 touch inventory.ini
 ```
 
-### Create a role
+### Créer un rôle
 
 ```bash
 ansible-galaxy init <nom_de_mon_role>
 ```
 
-### Run playbook
+### Exécuter le playbook
 
 ```bash
 ansible-playbook -i inventory.ini install-apache.yml
@@ -48,13 +48,13 @@ ansible-playbook -i inventory.ini install-mariadb.yml
 ansible-playbook -i inventory.ini install-mediawiki.yml --ask-vault-pass
 ```
 
-### ping all hosts
+### Vérifier la connectivité avec tous les hôtes
 
 ```bash
 ansible all -m ping -i inventory.ini
 ```
 
-### allow media wiki
+### Autoriser MediaWiki
 
 ```sql
 GRANT ALL PRIVILEGES ON *.mediawiki TO 'mediawiki'@'%' IDENTIFIED BY 'mediaDBpassw0rd' WITH GRANT OPTION;
