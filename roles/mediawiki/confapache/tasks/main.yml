@@ -1,68 +1,54 @@
 ---
+- name: Add azureuser to www-data group
+  become: yes
+  user:
+    name: azureuser
+    groups: www-data
+    append: yes
 
-#0. Ajout du compte user- ansible dans le groupe www-data
-# pour la gestion des droits sur l'arborescence mediawiki
-- name: "add user-ansible"
-  command:
-    usermod -a -G www-data user-ansible"
-
-#1. Création du repertoire pour l'installation des fichiers Mediawiki
-- name: "mediawiki directory"
+- name: Create mediawiki directory
   file:
-    path: "{{mediawiki_directory}}"
+    path: "{{ mediawiki_directory }}"
     owner: "www-data"
     group: "www-data"
     state: directory
 
-#2. Décompresse le fichier source archive Mediawiki et le formate sans extension
-- name: "uncompress mediawiki archive"
-  unarchive:
-    src: "{{mediawiki_archive_url}}"
-    dest: "{{mediawiki_directory}}"
-    owner: "www-data"
-    group: "www-data"
-    remote_src: yes
-    #supprime mediawiki-1.xx.x/ du chemin
-    extra_opts: --transform=s/mediawiki-[0-9\.]*\///
+- name: Download mediawiki archive
+  get_url:
+    url: "{{ mediawiki_archive_url }}"
+    dest: "/tmp/mediawiki.tar.gz"
 
-#3. Ajoute les droits d'écriture pour le groupe www-data
-- name: "add g+w sur le répertoire mediawiki"
+- name: Uncompress mediawiki archive
   command:
-    chmod -R g+w {{mediawiki_directory}}
+    cmd: tar --strip-components=1 -xzf /tmp/mediawiki.tar.gz -C {{ mediawiki_directory }}
 
-#4. Exécute la tâche avec l'utilisateur ansible, se place dans le répertoire 
-#   de maintenance et exécute la commande de configuration si le fichier
-#   LocalSettings.php n'existe pas
-- name: "mediawiki configuration"
+- name: Add write permissions to mediawiki directory
+  file:
+    path: "{{ mediawiki_directory }}"
+    mode: 'g+w'
+    recurse: true
+
+- name: Configure mediawiki
   become: yes
-  become_user: "user-ansible"
-  args:
-    creates: "{{mediawiki_directory}}/LocalSettings.php"
-    chdir: "{{mediawiki_maintenance_directory}}"
+  become_user: azureuser
   command:
-    php install.php --scriptpath /{{mediawiki_name}}
-    --dbname mediawiki --lang fr
-    --dbuser {{mediawiki_db_user}}
-    --dbpass {{mediawiki_db_password}}
-    --pass {{mediawiki_admin_password}}
-    --dbserver {{mediawiki_db_host}}
-    --server http://http1
-    {{mediawiki_title}} {{mediawiki_admin_user}}
+    chdir: "{{ mediawiki_maintenance_directory }}"
+    cmd: >
+      php install.php --scriptpath /{{ mediawiki_name }} --dbname mediawiki --lang fr 
+      --dbuser {{ mediawiki_db_user }} --dbpass {{ mediawiki_db_password }} 
+      --pass {{ mediawiki_admin_password }} --dbserver {{ mediawiki_db_host }} 
+      --server http://ADvm1 {{ mediawiki_title }} {{ mediawiki_admin_user }}
+    creates: "{{ mediawiki_directory }}/LocalSettings.php"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups['apache'] }}"
   run_once: yes
-  delegate_to: "{{item}}"
-  with_items: "{{groups.apache}}"
 
-#5. Exécute la tâche avec l'utilisateur ansible, se place dans le répertoire 
-#   de maintenance et exécute la commande de mise à jour de la base
-#   une seule fois
-- name: "mediawiki db update"
+- name: Update mediawiki database
   become: yes
-  become_user: "user-ansible"
+  become_user: azureuser
   command:
-    php update.php --quick
-  args:
-    chdir: "{{mediawiki_maintenance_directory}}"
-  # La mise à jour à besoin d'être lancée une seule fois
-  run_once: yes
+    chdir: "{{ mediawiki_maintenance_directory }}"
+    cmd: php update.php --quick
   register: resultat
-  changed_when: "' ...done.' in resultat.stdout"
+  changed_when: "'...done.' in resultat.stdout"
+  run_once: yes
