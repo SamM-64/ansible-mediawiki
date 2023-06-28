@@ -7,11 +7,11 @@ Basé sur l'infrastructure du dossier network.
 ## Créer un environnement virtuel
 
 ```bash
-# To create
+# # Pour créer
 virtualenv -p python3 <nom_de_mon_virtual_env>
-# To activate
+# Pour activer
 source <nom_de_mon_virtual_env>/bin/activate
-# To deactivate
+# Pour désactiver
 deactivate
 ```
 ### Installer Ansible
